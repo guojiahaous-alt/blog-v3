@@ -8,8 +8,8 @@ const basicConfig = {
 	author: {
 		name: '郭雨博',
 		avatar: 'https://www.zhilu.site/api/avatar.png',
-		email: 'hi@zhilu.cyou',
-		homepage: 'https://www.zhilu.site/',
+		email: 'xiaocangshu_0224@qq.com',
+		homepage: 'https://blog.guoyubo.cn/',
 	},
 	copyright: {
 		abbr: 'CC BY-NC-SA 4.0',
@@ -18,9 +18,9 @@ const basicConfig = {
 	},
 	favicon: 'https://www.zhilu.site/api/icon.png',
 	language: 'zh-CN',
-	timeEstablished: '2019-07-19',
+	timeEstablished: '2026-05-22',
 	timeZone: 'Asia/Shanghai',
-	url: 'https://blog.zhilu.site/',
+	url: 'https://blog.guoyubo.cn/',
 	defaultCategory: '未分类',
 }
 
@@ -91,7 +91,7 @@ const blogConfig = {
 /** 用于生成 OPML 和友链页面配置 */
 export const myFeed: FeedEntry = {
 	author: blogConfig.author.name,
-	sitenick: '摸鱼处',
+	sitenick: '你好世界',
 	title: blogConfig.title,
 	desc: blogConfig.subtitle || blogConfig.description,
 	link: blogConfig.url,
