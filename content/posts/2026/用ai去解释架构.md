@@ -7,6 +7,7 @@ categories:
   - 技术
 tags:
   - Nuxt, Vue, 架构分析, 博客
+recommend: 1
 type: tech
 ---
 ## 项目概览
