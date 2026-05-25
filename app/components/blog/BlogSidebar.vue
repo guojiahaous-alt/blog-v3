@@ -40,6 +40,8 @@ const debouncedSelection = refDebounced(text)
 				</li>
 			</menu>
 		</template>
+
+		<BlogFriends :list="appConfig.friends" />
 	</nav>
 
 	<footer class="sidebar-footer">

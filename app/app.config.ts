@@ -100,6 +100,13 @@ export default defineAppConfig({
 		emojiTail: ['📄', '🦌', '🙌', '🐟', '🏖️'],
 	},
 
+	/** 好友模块（侧边栏） */
+	friends: [
+		{ name: '2_haowen_V', url: 'https://hehaowen.com.cn/', avatar: 'https://img.hehaowen.com.cn/image/avatar/%E5%8B%87%E5%A4%AA.png', desc: 'CTF大手子' },
+		{ name: '小李同学', url: 'https://blog.junjieli.top/', avatar: 'https://www.junjieli.top/logo_64x64.png', desc: '一支努力变强的小彩笔' },
+
+	] satisfies { name: string, url: string, avatar?: string, desc?: string }[],
+
 	/** 友链页面 */
 	link: {
 		/** 无订阅源展示静音图标 */
