@@ -12,6 +12,11 @@
 
 	overflow-wrap: break-word;
 	background-color: var(--c-bg-1);
+	background-image: var(--bg-image);
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-attachment: fixed;
 	font-family: sans-serif;
 	font-family: var(--font-basic);
 	font-synthesis: style;

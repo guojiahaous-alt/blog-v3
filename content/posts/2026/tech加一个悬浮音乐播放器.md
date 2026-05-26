@@ -7,6 +7,7 @@ categories:
   - 技术
 tags:
   - Nuxt, APlayer, 音乐播放器, 博客定制
+image: https://img-reg-ab.imagency.cn/e/af48c66408dfa1363293b57d97971005.jpg
 recommend: 1
 type: tech
 ---
