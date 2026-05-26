@@ -17,6 +17,7 @@ const appConfig = useAppConfig()
 <BlogPanel />
 <BikariyaModals />
 <BlogPlayer :audio="appConfig.player?.audio" />
+<BlogPetals />
 </template>
 
 <!-- eslint-disable-next-line vue/enforce-style-attribute -->

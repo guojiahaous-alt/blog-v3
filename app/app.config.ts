@@ -174,4 +174,9 @@ export default defineAppConfig({
 			},
 		],
 	},
+
+	petals: {
+		enabled: true,
+		count: 15,
+	},
 })
