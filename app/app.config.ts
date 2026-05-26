@@ -149,4 +149,29 @@ export default defineAppConfig({
 			tip: '深色模式',
 		},
 	},
+
+	/** 悬浮音乐播放器 */
+	player: {
+		audio: [
+			{
+				name: '晴天',
+				artist: '周杰伦',
+				url: 'https://cn-south-17-aplayer-46154810.oss.dogecdn.com/qingtian.mp3',
+				cover: 'https://cn-south-17-aplayer-46154810.oss.dogecdn.com/qingtian.jpg',
+				theme: '#b7daff',
+			},
+			{
+				name: 'あっちゅ～ま青春!',
+				artist: '七森中☆ごらく部',
+				url: 'https://cn-south-17-aplayer-46154810.oss.dogecdn.com/yuruyuri.mp3',
+				cover: 'https://cn-south-17-aplayer-46154810.oss.dogecdn.com/yuruyuri.jpg',
+			},
+			{
+				name: 'secret base~君がくれたもの~',
+				artist: '茅野愛衣',
+				url: 'https://cn-south-17-aplayer-46154810.oss.dogecdn.com/secretbase.mp3',
+				cover: 'https://cn-south-17-aplayer-46154810.oss.dogecdn.com/secretbase.jpg',
+			},
+		],
+	},
 })

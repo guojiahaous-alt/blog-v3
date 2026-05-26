@@ -1,3 +1,7 @@
+<script setup>
+const appConfig = useAppConfig()
+</script>
+
 <template>
 <NuxtLoadingIndicator />
 <NuxtRouteAnnouncer :style="{ position: 'absolute' }" />
@@ -12,6 +16,7 @@
 </div>
 <BlogPanel />
 <BikariyaModals />
+<BlogPlayer :audio="appConfig.player?.audio" />
 </template>
 
 <!-- eslint-disable-next-line vue/enforce-style-attribute -->
