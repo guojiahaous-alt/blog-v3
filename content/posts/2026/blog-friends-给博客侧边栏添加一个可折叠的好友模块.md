@@ -42,7 +42,7 @@ type: tech
 - **数据配置**：好友列表的数据源
 - **集成接入**：把组件放进侧边栏
 
-## 第一步：创建好友组件
+#### 第一步：创建好友组件
 
 在 `app/components/blog/` 目录下新建 `BlogFriends.vue` 文件。Nuxt 会自动根据目录结构注册组件，所以放在 `blog/` 目录下就能以 `<BlogFriends>` 的方式使用。
 

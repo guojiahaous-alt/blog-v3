@@ -7,6 +7,7 @@ categories:
   - 技术
 tags:
   - 逆向工程, CTF, IDA Pro, WriteUp
+image: https://img.guoyubo.cn/img/Image-00-33-01.png
 type: tech
 ---
 # 青岑re类begin题wp
