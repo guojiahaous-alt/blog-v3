@@ -103,7 +103,7 @@ export default defineAppConfig({
 	/** 好友模块（侧边栏） */
 	friends: [
 		{ name: '2_haowen_V', url: 'https://hehaowen.com.cn/', avatar: 'https://img.hehaowen.com.cn/image/avatar/%E5%8B%87%E5%A4%AA.png', desc: 'CTF大手子' },
-		{ name: '翞~涵', url: 'https://blog.han1130.top/', avatar: 'https://img.han1130.top/photo/touxiang.png', desc: 'web选手' },
+		{ name: '翞~涵', url: 'https://blog.han1130.top/', avatar: 'https://img.han1130.top/img/touxiang.png', desc: 'web选手' },
 
 	] satisfies { name: string, url: string, avatar?: string, desc?: string }[],
 
