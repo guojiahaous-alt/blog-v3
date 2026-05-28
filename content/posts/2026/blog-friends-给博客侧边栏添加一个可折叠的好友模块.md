@@ -7,6 +7,7 @@ categories:
   - 技术
 tags:
   - Nuxt, Vue, 组件开发, 博客定制
+image: https://img.guoyubo.cn/img/Image-11-21-15.png
 recommend: 1
 type: tech
 ---

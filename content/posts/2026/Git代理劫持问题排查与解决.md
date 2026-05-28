@@ -7,10 +7,10 @@ categories:
   - 技术
 tags:
   - Git, 代理, SSH, 排障
+image: https://img.guoyubo.cn/img/Image-11-21-33.png
 type: tech
 recommend: 1
 ---
-
 # Git 被系统代理强制劫持？一次排查与解决的全记录
 
 最近在 clone 仓库的时候遇到了一个很诡异的问题——明明我用的是 SSH 地址，Git 却非要走 HTTPS，搞得认证一直失败。折腾了一阵子才搞明白，原来是系统代理在背后搞鬼。把排查过程记录下来，万一有人踩到同样的坑可以参考。

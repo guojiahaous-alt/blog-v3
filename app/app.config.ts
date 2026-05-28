@@ -170,4 +170,8 @@ export default defineAppConfig({
 		enabled: true,
 		count: 15,
 	},
+
+	heartCursor: {
+		enabled: true,
+	},
 })

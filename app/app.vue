@@ -18,6 +18,7 @@ const appConfig = useAppConfig()
 <BikariyaModals />
 <BlogPlayer :audio="appConfig.player?.audio" />
 <BlogPetals />
+<BlogHeartCursor />
 </template>
 
 <!-- eslint-disable-next-line vue/enforce-style-attribute -->
