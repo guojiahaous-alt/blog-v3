@@ -7,7 +7,7 @@ const basicConfig = {
 	description: '郭雨博的个人博客，分享技术与生活。“折腾不止，摸鱼生活——摸门🙏🏻”。这个博客记录了他在生活和技术学习中的点滴经历，充满启发与思考。网站界面简洁美观，内容丰富实用，人气互动活跃，涵盖了编程、生活、学习等多个领域，为读者提供了卓越的阅读体验。',
 	author: {
 		name: '郭雨博',
-		avatar: 'https://blog.guoyubo.cn/avatar.jpg',
+		avatar: 'https://img.guoyubo.cn/img/Image-10-43-28.png',
 		email: 'xiaocangshu_0224@qq.com',
 		homepage: 'https://blog.guoyubo.cn/',
 	},
@@ -16,7 +16,7 @@ const basicConfig = {
 		name: '署名-非商业性使用-相同方式共享 4.0 国际',
 		url: 'https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans',
 	},
-	favicon: 'https://blog.guoyubo.cn/avatar.jpg',
+	favicon: 'https://img.guoyubo.cn/img/Image-10-43-28.png',
 	language: 'zh-CN',
 	timeEstablished: '2026-05-22',
 	timeZone: 'Asia/Shanghai',

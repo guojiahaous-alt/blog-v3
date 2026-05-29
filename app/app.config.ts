@@ -93,7 +93,7 @@ export default defineAppConfig({
 
 	/** 左侧栏顶部 Logo */
 	header: {
-		logo: '/avatar.jpg',
+		logo: 'https://img.guoyubo.cn/img/Image-10-43-28.png',
 		/** 展示标题文本，否则展示纯 Logo */
 		showTitle: true,
 		subtitle: blogConfig.subtitle,
