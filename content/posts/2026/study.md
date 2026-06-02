@@ -2,7 +2,7 @@
 title: 努力学习逆向第一天
 description: 了解IDApro 基础使用
 date: 2026-05-28
-updated: 2026-05-28
+updated: 2026-05-29
 categories:
   - 生活
 tags:
@@ -12,7 +12,6 @@ tags:
 image: https://img.guoyubo.cn/img/Image-11-22-08.png
 type: tech
 ---
-
 # IDA反编译入门课程第一讲：IDA基础操作与入门CTF逆向题演示
 
 ## IDA软件基础介绍与安装

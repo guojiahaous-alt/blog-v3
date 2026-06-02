@@ -157,6 +157,7 @@ export default defineAppConfig({
 				name: '沧海犹有你',
 				artist: '小鱼dik',
 				url: 'https://img.guoyubo.cn/img/海屿你 - 小鱼dik.flac',
+				lrc: '/music/haiyinigeci.lrc',
 			},
 		],
 		// meting: {
