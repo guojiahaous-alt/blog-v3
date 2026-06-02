@@ -776,8 +776,7 @@ onBeforeUnmount(() => {
 }
 
 .lyric-panel {
-	background: linear-gradient(135deg, var(--c-bg-1) 0%, var(--c-bg-soft) 100%);
-	box-shadow: var(--box-shadow-2), 0 4px 30px rgba(0, 0, 0, 0.1);
+	background: transparent;
 	border-radius: 1rem 1rem 0 0;
 	padding: 1rem;
 	width: 400px;
@@ -785,9 +784,6 @@ onBeforeUnmount(() => {
 	display: flex;
 	flex-direction: column;
 	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-	backdrop-filter: blur(12px);
-	border: 1px solid var(--c-border);
-	border-bottom: none;
 
 	@media (max-width: 768px) {
 		width: calc(100vw - 2rem);
@@ -807,27 +803,30 @@ onBeforeUnmount(() => {
 	justify-content: space-between;
 	margin-bottom: 1rem;
 	padding-bottom: 0.75rem;
-	border-bottom: 1px solid var(--c-border);
 
 	.lyric-title {
 		font-size: 0.9rem;
 		font-weight: 600;
 		color: var(--c-text);
 		letter-spacing: 0.05em;
+		text-shadow: 
+			1px 1px 2px rgba(0, 0, 0, 0.3),
+			-1px -1px 2px rgba(0, 0, 0, 0.3);
 	}
 
 	.lyric-toggle {
-		background: none;
-		border: none;
-		color: var(--c-text-2);
+		background: rgba(255, 255, 255, 0.1);
+		backdrop-filter: blur(4px);
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		color: var(--c-text);
 		cursor: pointer;
 		padding: 0.375rem;
 		border-radius: 0.375rem;
 		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
 		&:hover {
-			background-color: var(--c-bg);
-			color: var(--c-text);
+			background-color: rgba(255, 255, 255, 0.2);
+			color: var(--c-primary);
 			transform: rotate(180deg);
 		}
 
@@ -883,8 +882,16 @@ onBeforeUnmount(() => {
 		color: var(--c-primary);
 		font-weight: 700;
 		font-size: 1.15rem;
-		text-shadow: 0 0 15px var(--c-primary), 0 0 30px var(--c-primary);
-		background: linear-gradient(90deg, transparent 0%, rgba(59, 130, 246, 0.12) 50%, transparent 100%);
+		text-shadow: 
+			0 0 10px var(--c-primary),
+			0 0 20px var(--c-primary),
+			0 0 30px var(--c-primary),
+			0 0 40px var(--c-primary),
+			1px 1px 0 rgba(255, 255, 255, 0.8),
+			-1px -1px 0 rgba(255, 255, 255, 0.8),
+			1px -1px 0 rgba(255, 255, 255, 0.8),
+			-1px 1px 0 rgba(255, 255, 255, 0.8);
+		-webkit-text-stroke: 0.5px rgba(255, 255, 255, 0.5);
 		animation: lyricPulse 2s ease-in-out infinite;
 		transform: scale(1.02);
 
