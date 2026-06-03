@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   return {
     success: true,
     data: {
-      total: stats.total + stats.today,
+      total: stats.total,
       today: stats.today,
       online: stats.online,
     },

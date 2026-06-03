@@ -11,7 +11,7 @@ const fetchStats = async () => {
  const response = await fetch('/api/visitors');
  const data = await response.json();
  stats.value = {
- total: data.total + data.today,
+ total: data.total,
  today: data.today,
  online: data.online,
  };
