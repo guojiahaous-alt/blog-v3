@@ -12,17 +12,24 @@ export interface VisitorStats {
 const STATS_DIR = join(process.cwd(), 'data')
 const STATS_FILE = join(STATS_DIR, 'visitors.json')
 const ONLINE_TIMEOUT = 300000
-const RATE_LIMIT_DURATION = 60000
-const RATE_LIMIT_MAX = 10
 
 let cachedStats: VisitorStats | null = null
-let rateLimitCache = new Map<string, { count: number; timestamp: number }>()
+let isWriting = false
+let pendingWrites: (() => Promise<void>)[] = []
 
 async function initStats(): Promise<VisitorStats> {
   try {
     await mkdir(STATS_DIR, { recursive: true })
     const data = await readFile(STATS_FILE, 'utf-8')
-    return JSON.parse(data)
+    const parsed = JSON.parse(data)
+    // 确保数据结构完整
+    return {
+      total: parsed.total || 0,
+      today: parsed.today || 0,
+      online: parsed.online || 0,
+      todayRecords: parsed.todayRecords || {},
+      lastResetTime: parsed.lastResetTime || Date.now(),
+    }
   } catch {
     return {
       total: 0,
@@ -44,81 +51,93 @@ function isNewDay(lastReset: number): boolean {
   )
 }
 
-function cleanupOnline(stats: VisitorStats): VisitorStats {
+function cleanupOnline(stats: VisitorStats): { stats: VisitorStats; removedCount: number } {
   const now = Date.now()
   let onlineCount = 0
+  let removedCount = 0
 
   for (const [ip, record] of Object.entries(stats.todayRecords)) {
     if (now - record.lastVisit > ONLINE_TIMEOUT) {
       delete stats.todayRecords[ip]
+      removedCount++
     } else {
       onlineCount++
     }
   }
 
-  return { ...stats, online: onlineCount }
+  return { stats: { ...stats, online: onlineCount }, removedCount }
 }
 
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now()
-  const existing = rateLimitCache.get(ip)
-
-  if (!existing) {
-    rateLimitCache.set(ip, { count: 1, timestamp: now })
-    return true
+async function writeStatsSafe(stats: VisitorStats): Promise<void> {
+  // 如果正在写入，将操作加入队列
+  if (isWriting) {
+    return new Promise((resolve) => {
+      pendingWrites.push(async () => {
+        await writeFile(STATS_FILE, JSON.stringify(stats, null, 2))
+        resolve()
+      })
+    })
   }
 
-  if (now - existing.timestamp > RATE_LIMIT_DURATION) {
-    rateLimitCache.set(ip, { count: 1, timestamp: now })
-    return true
+  isWriting = true
+  try {
+    await writeFile(STATS_FILE, JSON.stringify(stats, null, 2))
+    
+    // 处理排队的写入操作
+    while (pendingWrites.length > 0) {
+      const write = pendingWrites.shift()
+      if (write) await write()
+    }
+  } catch (e) {
+    console.error('Failed to save visitor stats:', e)
+    throw e
+  } finally {
+    isWriting = false
   }
-
-  if (existing.count >= RATE_LIMIT_MAX) {
-    return false
-  }
-
-  rateLimitCache.set(ip, { count: existing.count + 1, timestamp: now })
-  return true
 }
 
 export async function recordVisit(ip: string): Promise<VisitorStats> {
-  if (!checkRateLimit(ip)) {
-    return getStats()
-  }
-
+  // 初始化缓存
   if (!cachedStats) {
     cachedStats = await initStats()
   }
 
-  let stats = { ...cachedStats }
-
-  if (isNewDay(stats.lastResetTime)) {
-    stats = {
-      total: stats.total,
+  // 检查是否是新的一天，如果是则重置数据
+  if (isNewDay(cachedStats.lastResetTime)) {
+    cachedStats = {
+      total: cachedStats.total,
       today: 0,
       online: 0,
       todayRecords: {},
       lastResetTime: Date.now(),
     }
+    await writeStatsSafe(cachedStats)
   }
 
+  // 获取当前统计数据（基于缓存）
+  let stats = JSON.parse(JSON.stringify(cachedStats))
   const now = Date.now()
 
+  // 清理超时的在线用户
+  const cleanupResult = cleanupOnline(stats)
+  stats = cleanupResult.stats
+
+  // 记录新的访问
   if (!stats.todayRecords[ip]) {
+    // 新IP访问：增加 total 和 today
     stats.today++
     stats.total++
     stats.todayRecords[ip] = { count: 1, lastVisit: now }
   } else {
-    stats.todayRecords[ip].count++
+    // 已存在的IP：只更新时间戳
     stats.todayRecords[ip].lastVisit = now
   }
 
-  stats = cleanupOnline(stats)
-
-  cachedStats = stats
-
+  // 更新缓存和文件
+  cachedStats = JSON.parse(JSON.stringify(stats))
+  
   try {
-    await writeFile(STATS_FILE, JSON.stringify(stats, null, 2))
+    await writeStatsSafe(stats)
   } catch (e) {
     console.error('Failed to save visitor stats:', e)
   }
@@ -127,12 +146,15 @@ export async function recordVisit(ip: string): Promise<VisitorStats> {
 }
 
 export async function getStats(): Promise<VisitorStats> {
+  // 初始化缓存
   if (!cachedStats) {
     cachedStats = await initStats()
   }
 
-  let stats = cleanupOnline({ ...cachedStats })
+  // 创建统计数据副本
+  let stats = JSON.parse(JSON.stringify(cachedStats))
 
+  // 检查是否是新的一天
   if (isNewDay(stats.lastResetTime)) {
     stats = {
       total: stats.total,
@@ -141,14 +163,18 @@ export async function getStats(): Promise<VisitorStats> {
       todayRecords: {},
       lastResetTime: Date.now(),
     }
-    cachedStats = stats
+    cachedStats = JSON.parse(JSON.stringify(stats))
     
     try {
-      await writeFile(STATS_FILE, JSON.stringify(stats, null, 2))
+      await writeStatsSafe(stats)
     } catch (e) {
       console.error('Failed to save visitor stats:', e)
     }
   }
+
+  // 清理超时的在线用户（不影响 today 和 todayRecords）
+  const cleanupResult = cleanupOnline(stats)
+  stats = cleanupResult.stats
 
   return stats
 }
