@@ -1,0 +1,12 @@
+{
+  "total": 0,
+  "today": 2,
+  "online": 1,
+  "todayRecords": {
+    "::1": {
+      "count": 6,
+      "lastVisit": 1780462201568
+    }
+  },
+  "lastResetTime": 1780460689474
+}
