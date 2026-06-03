@@ -47,7 +47,7 @@ function isNewDay(lastReset: number): boolean {
 function cleanupOnline(stats: VisitorStats): VisitorStats {
   const now = Date.now()
   let onlineCount = 0
-  
+
   for (const [ip, record] of Object.entries(stats.todayRecords)) {
     if (now - record.lastVisit > ONLINE_TIMEOUT) {
       delete stats.todayRecords[ip]
@@ -55,28 +55,28 @@ function cleanupOnline(stats: VisitorStats): VisitorStats {
       onlineCount++
     }
   }
-  
+
   return { ...stats, online: onlineCount }
 }
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now()
   const existing = rateLimitCache.get(ip)
-  
+
   if (!existing) {
     rateLimitCache.set(ip, { count: 1, timestamp: now })
     return true
   }
-  
+
   if (now - existing.timestamp > RATE_LIMIT_DURATION) {
     rateLimitCache.set(ip, { count: 1, timestamp: now })
     return true
   }
-  
+
   if (existing.count >= RATE_LIMIT_MAX) {
     return false
   }
-  
+
   rateLimitCache.set(ip, { count: existing.count + 1, timestamp: now })
   return true
 }
@@ -85,43 +85,44 @@ export async function recordVisit(ip: string): Promise<VisitorStats> {
   if (!checkRateLimit(ip)) {
     return getStats()
   }
-  
+
   if (!cachedStats) {
     cachedStats = await initStats()
   }
-  
+
   let stats = { ...cachedStats }
-  
+
   if (isNewDay(stats.lastResetTime)) {
     stats = {
-      total: stats.total + stats.today,
+      total: stats.total,
       today: 0,
       online: 0,
       todayRecords: {},
       lastResetTime: Date.now(),
     }
   }
-  
+
   const now = Date.now()
-  
+
   if (!stats.todayRecords[ip]) {
     stats.today++
+    stats.total++
     stats.todayRecords[ip] = { count: 1, lastVisit: now }
   } else {
     stats.todayRecords[ip].count++
     stats.todayRecords[ip].lastVisit = now
   }
-  
+
   stats = cleanupOnline(stats)
-  
+
   cachedStats = stats
-  
+
   try {
     await writeFile(STATS_FILE, JSON.stringify(stats, null, 2))
   } catch (e) {
     console.error('Failed to save visitor stats:', e)
   }
-  
+
   return stats
 }
 
@@ -129,25 +130,25 @@ export async function getStats(): Promise<VisitorStats> {
   if (!cachedStats) {
     cachedStats = await initStats()
   }
-  
+
   let stats = cleanupOnline({ ...cachedStats })
-  
+
   if (isNewDay(stats.lastResetTime)) {
     stats = {
-      total: stats.total + stats.today,
+      total: stats.total,
       today: 0,
       online: 0,
       todayRecords: {},
       lastResetTime: Date.now(),
     }
     cachedStats = stats
-    
+
     try {
       await writeFile(STATS_FILE, JSON.stringify(stats, null, 2))
     } catch (e) {
       console.error('Failed to save visitor stats:', e)
     }
   }
-  
+
   return stats
 }
