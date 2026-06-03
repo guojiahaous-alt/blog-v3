@@ -142,7 +142,7 @@ export async function getStats(): Promise<VisitorStats> {
       lastResetTime: Date.now(),
     }
     cachedStats = stats
-
+    
     try {
       await writeFile(STATS_FILE, JSON.stringify(stats, null, 2))
     } catch (e) {
