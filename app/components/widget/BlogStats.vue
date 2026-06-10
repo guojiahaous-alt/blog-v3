@@ -5,7 +5,6 @@ import { UtilDate } from '#components'
 const appConfig = useAppConfig()
 const runtimeConfig = useRuntimeConfig()
 
-// 响应头不正确时，stats.value 可能会是字符串，首次属性访问可能为 undefined
 const { data: stats } = useFetch('/api/stats')
 
 const yearlyTip = computed(() => Object
@@ -15,17 +14,23 @@ const yearlyTip = computed(() => Object
 	.join('\n') || '数据获取失败',
 )
 
-// 生成唯一访客ID（基于浏览器指纹）
+const isClient = typeof window !== 'undefined'
+
 const getVisitorId = (): string => {
   const storageKey = 'blog_visitor_id'
+  
+  if (typeof localStorage === 'undefined') {
+    return 'ssr-' + Math.random().toString(36).substring(2, 15)
+  }
+  
   let visitorId = localStorage.getItem(storageKey)
   
   if (!visitorId) {
     const timestamp = Date.now().toString(36)
     const random = Math.random().toString(36).substring(2, 10)
-    const screen = `${screen.width}x${screen.height}x${screen.colorDepth}`
+    const screenInfo = isClient ? `${window.screen.width}x${window.screen.height}x${window.screen.colorDepth}` : 'unknown'
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
-    const hash = btoa(`${timestamp}${random}${screen}${timezone}`).substring(0, 24)
+    const hash = btoa(`${timestamp}${random}${screenInfo}${timezone}`).substring(0, 24)
     visitorId = `${timestamp}-${hash}`
     localStorage.setItem(storageKey, visitorId)
   }
@@ -33,7 +38,6 @@ const getVisitorId = (): string => {
   return visitorId
 }
 
-// 访问量统计
 const visitorStats = ref({
 	total: 0,
 	today: 0,
@@ -57,9 +61,12 @@ const fetchVisitorStats = async () => {
 }
 
 const recordVisit = async () => {
+	if (!isClient) return
+	
 	try {
 		const visitorId = getVisitorId()
-		await fetch('/api/visitors', {
+		console.log('Recording visit (BlogStats):', visitorId)
+		const response = await fetch('/api/visitors', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -67,6 +74,8 @@ const recordVisit = async () => {
 			},
 			body: JSON.stringify({ visitorId }),
 		})
+		const data = await response.json()
+		console.log('Visit recorded (BlogStats):', data)
 		await fetchVisitorStats()
 	} catch (e) {
 		console.error('Failed to record visit:', e)

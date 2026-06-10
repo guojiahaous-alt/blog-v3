@@ -1,7 +1,16 @@
 {
-  "total": 101,
-  "today": 0,
-  "online": 0,
-  "todayRecords": {},
+  "total": 103,
+  "today": 2,
+  "online": 1,
+  "todayRecords": {
+    "vid:test-visitor-123": {
+      "count": 1,
+      "lastVisit": 1781096751599
+    },
+    "vid:mq87aojl-bXE4N2FvamxkaHZ3dmU3YTE3": {
+      "count": 1,
+      "lastVisit": 1781103935961
+    }
+  },
   "lastResetTime": 1781090000000
 }

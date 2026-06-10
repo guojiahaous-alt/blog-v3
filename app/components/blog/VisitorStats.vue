@@ -8,18 +8,23 @@ const stats = ref({
 });
 let refreshInterval: ReturnType<typeof setInterval> | null = null;
 
-// 生成唯一访客ID（基于浏览器指纹）
+const isClient = typeof window !== 'undefined'
+
 const getVisitorId = (): string => {
   const storageKey = 'blog_visitor_id'
+  
+  if (typeof localStorage === 'undefined') {
+    return 'ssr-' + Math.random().toString(36).substring(2, 15)
+  }
+  
   let visitorId = localStorage.getItem(storageKey)
   
   if (!visitorId) {
-    // 生成唯一ID：时间戳 + 随机数 + 屏幕分辨率 + 时区
     const timestamp = Date.now().toString(36)
     const random = Math.random().toString(36).substring(2, 10)
-    const screen = `${screen.width}x${screen.height}x${screen.colorDepth}`
+    const screenInfo = isClient ? `${window.screen.width}x${window.screen.height}x${window.screen.colorDepth}` : 'unknown'
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
-    const hash = btoa(`${timestamp}${random}${screen}${timezone}`).substring(0, 24)
+    const hash = btoa(`${timestamp}${random}${screenInfo}${timezone}`).substring(0, 24)
     visitorId = `${timestamp}-${hash}`
     localStorage.setItem(storageKey, visitorId)
   }
@@ -43,9 +48,12 @@ const fetchStats = async () => {
 };
 
 const recordVisit = async () => {
+ if (!isClient) return
+ 
  try {
  const visitorId = getVisitorId()
- await fetch('/api/visitors', {
+ console.log('Recording visit with visitorId:', visitorId)
+ const response = await fetch('/api/visitors', {
    method: 'POST',
    headers: {
      'Content-Type': 'application/json',
@@ -53,6 +61,8 @@ const recordVisit = async () => {
    },
    body: JSON.stringify({ visitorId }),
  });
+ const data = await response.json()
+ console.log('Visit recorded:', data)
  await fetchStats();
  }
  catch (e) {
