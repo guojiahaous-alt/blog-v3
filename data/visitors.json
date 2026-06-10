@@ -1,24 +1,12 @@
 {
-  "total": 105,
-  "today": 4,
-  "online": 2,
+  "total": 106,
+  "today": 1,
+  "online": 1,
   "todayRecords": {
-    "vid:test-visitor-123": {
-      "count": 1,
-      "lastVisit": 1781096751599
-    },
     "vid:mq87aojl-bXE4N2FvamxkaHZ3dmU3YTE3": {
       "count": 1,
-      "lastVisit": 1781104882849
-    },
-    "vid:mq87cqlf-bXE4N2NxbGZjeGowc3EzOTE3": {
-      "count": 1,
-      "lastVisit": 1781104031918
-    },
-    "vid:current-user-test": {
-      "count": 1,
-      "lastVisit": 1781104717531
+      "lastVisit": 1781108618885
     }
   },
-  "lastResetTime": 1781090000000
+  "lastResetTime": 1781108071665
 }
