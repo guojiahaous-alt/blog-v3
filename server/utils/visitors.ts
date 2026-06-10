@@ -173,6 +173,7 @@ export async function getStats(): Promise<VisitorStats> {
     }
   }
 
+  stats.today = Object.keys(stats.todayRecords).length
   stats.online = calculateOnline(stats)
 
   return stats
