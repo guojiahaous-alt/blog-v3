@@ -1,0 +1,51 @@
+不是的，`npx vercel --prod` 是**部署网站项目**的命令，不是部署数据库。
+
+## 命令说明
+
+| 命令 | 作用 |
+|------|------|
+| `npx vercel --prod` | 将项目代码部署到 Vercel 生产环境 |
+| `npx vercel` | 部署到预览环境（非生产） |
+| `npx vercel env pull` | 拉取 Vercel 环境变量到本地 |
+
+---
+
+## Vercel 数据库（KV/Redis）的创建方式
+
+Vercel 的 KV 数据库**不是通过命令行部署的**，而是在 Vercel Dashboard 网页上创建：
+
+### 创建步骤
+
+1. 登录 [Vercel Dashboard](https://vercel.com/dashboard)
+2. 点击顶部导航的 **Storage**
+3. 点击 **Create Database**
+4. 选择 **Upstash for Redis**
+5. 填写数据库名称，选择区域
+6. 点击 **Create**
+7. 点击 **Connect to Project** 连接到你的项目
+
+---
+
+## 完整部署流程
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  1. 在 Vercel Dashboard 创建 KV 数据库（只需一次）            │
+│     ↓                                                        │
+│  2. 将数据库连接到项目                                        │
+│     ↓                                                        │
+│  3. npx vercel env pull  （拉取环境变量到本地）               │
+│     ↓                                                        │
+│  4. pnpm build           （本地构建测试）                    │
+│     ↓                                                        │
+│  5. npx vercel --prod    （部署项目到生产环境）               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 总结
+
+- **数据库**：在 Vercel Dashboard 网页上创建和管理
+- **项目代码**：通过 `npx vercel --prod` 命令部署
+- **环境变量**：通过 `npx vercel env pull` 拉取到本地

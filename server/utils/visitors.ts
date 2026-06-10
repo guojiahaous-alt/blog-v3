@@ -18,17 +18,15 @@ const defaultStats: VisitorStats = {
   lastResetTime: Date.now(),
 }
 
-// 使用 Vercel KV 的环境变量
 let redis: ReturnType<typeof Redis.fromEnv> | null = null
 
 try {
-  // Vercel KV 使用 KV_ 前缀的环境变量
   redis = new Redis({
     url: process.env.KV_REST_API_URL!,
     token: process.env.KV_REST_API_TOKEN!,
   })
 } catch (error) {
-  console.warn('[Visitor] Redis initialization failed, using default stats:', error)
+  console.warn('[Visitor] Redis initialization failed:', error)
 }
 
 function isNewDay(lastReset: number): boolean {
@@ -54,7 +52,7 @@ function calculateOnline(stats: VisitorStats): number {
 
 export async function recordVisit(ip: string, visitorId?: string): Promise<VisitorStats> {
   if (!redis) {
-    console.warn('[Visitor] Redis not available, skipping record')
+    console.warn('[Visitor] Redis not available')
     return defaultStats
   }
 
@@ -66,8 +64,7 @@ export async function recordVisit(ip: string, visitorId?: string): Promise<Visit
       stats = stored
     }
   } catch (error) {
-    console.warn('[Visitor] Failed to get stats from Redis:', error)
-    stats = defaultStats
+    console.warn('[Visitor] Failed to get stats:', error)
   }
 
   if (isNewDay(stats.lastResetTime)) {
@@ -83,20 +80,24 @@ export async function recordVisit(ip: string, visitorId?: string): Promise<Visit
   const now = Date.now()
   const recordKey = visitorId ? `vid:${visitorId}` : `ip:${ip}`
 
+  // 每次访问都增加总访问量（PV）
+  stats.total++
+
+  // 如果是新访客，增加今日访问量（UV）
   if (!stats.todayRecords[recordKey]) {
-    stats.total++
+    stats.today++
     stats.todayRecords[recordKey] = { count: 1, lastVisit: now }
   } else {
     stats.todayRecords[recordKey].lastVisit = now
   }
 
-  stats.today = Object.keys(stats.todayRecords).length
+  // 在线人数：5分钟内活跃的访客
   stats.online = calculateOnline(stats)
 
   try {
     await redis.set('visitor-stats', stats)
   } catch (error) {
-    console.warn('[Visitor] Failed to save stats to Redis:', error)
+    console.warn('[Visitor] Failed to save stats:', error)
   }
 
   return stats
@@ -104,7 +105,7 @@ export async function recordVisit(ip: string, visitorId?: string): Promise<Visit
 
 export async function getStats(): Promise<VisitorStats> {
   if (!redis) {
-    console.warn('[Visitor] Redis not available, returning default stats')
+    console.warn('[Visitor] Redis not available')
     return defaultStats
   }
 
@@ -116,7 +117,7 @@ export async function getStats(): Promise<VisitorStats> {
       stats = stored
     }
   } catch (error) {
-    console.warn('[Visitor] Failed to get stats from Redis:', error)
+    console.warn('[Visitor] Failed to get stats:', error)
     return defaultStats
   }
 
@@ -135,7 +136,6 @@ export async function getStats(): Promise<VisitorStats> {
     }
   }
 
-  stats.today = Object.keys(stats.todayRecords).length
   stats.online = calculateOnline(stats)
 
   return stats
