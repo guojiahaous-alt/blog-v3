@@ -1,11 +1,32 @@
 <script setup lang="ts">import { ref, onMounted, onUnmounted } from 'vue';
 import { useFetch } from '#imports';
+
 const stats = ref({
  total: 0,
  today: 0,
  online: 0,
 });
 let refreshInterval: ReturnType<typeof setInterval> | null = null;
+
+// 生成唯一访客ID（基于浏览器指纹）
+const getVisitorId = (): string => {
+  const storageKey = 'blog_visitor_id'
+  let visitorId = localStorage.getItem(storageKey)
+  
+  if (!visitorId) {
+    // 生成唯一ID：时间戳 + 随机数 + 屏幕分辨率 + 时区
+    const timestamp = Date.now().toString(36)
+    const random = Math.random().toString(36).substring(2, 10)
+    const screen = `${screen.width}x${screen.height}x${screen.colorDepth}`
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const hash = btoa(`${timestamp}${random}${screen}${timezone}`).substring(0, 24)
+    visitorId = `${timestamp}-${hash}`
+    localStorage.setItem(storageKey, visitorId)
+  }
+  
+  return visitorId
+}
+
 const fetchStats = async () => {
  try {
  const response = await fetch('/api/visitors');
@@ -20,24 +41,36 @@ const fetchStats = async () => {
  console.error('Failed to fetch visitor stats:', e);
  }
 };
+
 const recordVisit = async () => {
  try {
- await fetch('/api/visitors', { method: 'POST' });
+ const visitorId = getVisitorId()
+ await fetch('/api/visitors', {
+   method: 'POST',
+   headers: {
+     'Content-Type': 'application/json',
+     'X-Visitor-ID': visitorId,
+   },
+   body: JSON.stringify({ visitorId }),
+ });
  await fetchStats();
  }
  catch (e) {
  console.error('Failed to record visit:', e);
  }
 };
+
 onMounted(() => {
  recordVisit();
  refreshInterval = setInterval(fetchStats, 10000);
 });
+
 onUnmounted(() => {
  if (refreshInterval) {
  clearInterval(refreshInterval);
  }
 });
+
 const formatNumber = (num: number): string => {
  if (num >= 10000) {
  return (num / 10000).toFixed(1) + 'w';

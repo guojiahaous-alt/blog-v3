@@ -15,6 +15,24 @@ const yearlyTip = computed(() => Object
 	.join('\n') || '数据获取失败',
 )
 
+// 生成唯一访客ID（基于浏览器指纹）
+const getVisitorId = (): string => {
+  const storageKey = 'blog_visitor_id'
+  let visitorId = localStorage.getItem(storageKey)
+  
+  if (!visitorId) {
+    const timestamp = Date.now().toString(36)
+    const random = Math.random().toString(36).substring(2, 10)
+    const screen = `${screen.width}x${screen.height}x${screen.colorDepth}`
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const hash = btoa(`${timestamp}${random}${screen}${timezone}`).substring(0, 24)
+    visitorId = `${timestamp}-${hash}`
+    localStorage.setItem(storageKey, visitorId)
+  }
+  
+  return visitorId
+}
+
 // 访问量统计
 const visitorStats = ref({
 	total: 0,
@@ -40,7 +58,15 @@ const fetchVisitorStats = async () => {
 
 const recordVisit = async () => {
 	try {
-		await fetch('/api/visitors', { method: 'POST' })
+		const visitorId = getVisitorId()
+		await fetch('/api/visitors', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'X-Visitor-ID': visitorId,
+			},
+			body: JSON.stringify({ visitorId }),
+		})
 		await fetchVisitorStats()
 	} catch (e) {
 		console.error('Failed to record visit:', e)

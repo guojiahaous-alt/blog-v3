@@ -89,7 +89,11 @@ async function writeStatsSafe(stats: VisitorStats): Promise<void> {
   }
 }
 
-export async function recordVisit(ip: string): Promise<VisitorStats> {
+export async function recordVisit(
+  ip: string,
+  visitorId?: string,
+  userAgent?: string
+): Promise<VisitorStats> {
   if (!cachedStats) {
     cachedStats = await initStats()
   }
@@ -108,11 +112,27 @@ export async function recordVisit(ip: string): Promise<VisitorStats> {
   let stats = JSON.parse(JSON.stringify(cachedStats))
   const now = Date.now()
 
-  if (!stats.todayRecords[ip]) {
-    stats.total++
-    stats.todayRecords[ip] = { count: 1, lastVisit: now }
+  // 使用组合标识符：优先使用前端传递的 visitorId，其次使用 IP + User-Agent 哈希
+  let recordKey: string
+  
+  if (visitorId) {
+    // 前端传递的唯一访客ID（最优先）
+    recordKey = `vid:${visitorId}`
+  } else if (userAgent) {
+    // 使用 IP + User-Agent 组合创建唯一标识
+    const crypto = await import('crypto')
+    const hash = crypto.createHash('sha256').update(`${ip}:${userAgent}`).digest('hex').substring(0, 16)
+    recordKey = `ua:${hash}`
   } else {
-    stats.todayRecords[ip].lastVisit = now
+    // 降级到仅使用IP
+    recordKey = `ip:${ip}`
+  }
+
+  if (!stats.todayRecords[recordKey]) {
+    stats.total++
+    stats.todayRecords[recordKey] = { count: 1, lastVisit: now }
+  } else {
+    stats.todayRecords[recordKey].lastVisit = now
   }
 
   stats.today = Object.keys(stats.todayRecords).length
