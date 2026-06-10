@@ -38,6 +38,7 @@
     "@pinia/nuxt": "catalog:util",
     "@shikijs/colorized-brackets": "catalog:content",
     "@shikijs/transformers": "catalog:content",
+    "@upstash/redis": "^1.38.0",
     "@vueuse/core": "catalog:util",
     "@vueuse/nuxt": "catalog:util",
     "@vueuse/router": "catalog:util",

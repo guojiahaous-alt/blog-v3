@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir } from 'fs/promises'
+import { readFile, writeFile, mkdir, access } from 'fs/promises'
 import { join } from 'path'
 
 export interface VisitorStats {
@@ -17,19 +17,36 @@ let cachedStats: VisitorStats | null = null
 let isWriting = false
 let pendingWrites: (() => Promise<void>)[] = []
 
+const isVercel = process.env.VERCEL === '1' || !!process.env.VERCEL_URL
+
 async function initStats(): Promise<VisitorStats> {
   try {
     await mkdir(STATS_DIR, { recursive: true })
-    const data = await readFile(STATS_FILE, 'utf-8')
-    const parsed = JSON.parse(data)
-    return {
-      total: parsed.total || 0,
-      today: parsed.today || 0,
-      online: parsed.online || 0,
-      todayRecords: parsed.todayRecords || {},
-      lastResetTime: parsed.lastResetTime || Date.now(),
+    
+    try {
+      await access(STATS_FILE)
+      const data = await readFile(STATS_FILE, 'utf-8')
+      const parsed = JSON.parse(data)
+      
+      return {
+        total: parsed.total || 0,
+        today: parsed.today || 0,
+        online: parsed.online || 0,
+        todayRecords: parsed.todayRecords || {},
+        lastResetTime: parsed.lastResetTime || Date.now(),
+      }
+    } catch {
+      console.log('[Visitor] Stats file not found, creating new')
+      return {
+        total: 0,
+        today: 0,
+        online: 0,
+        todayRecords: {},
+        lastResetTime: Date.now(),
+      }
     }
-  } catch {
+  } catch (e) {
+    console.error('[Visitor] Failed to init stats:', e)
     return {
       total: 0,
       today: 0,
@@ -82,7 +99,7 @@ async function writeStatsSafe(stats: VisitorStats): Promise<void> {
       if (write) await write()
     }
   } catch (e) {
-    console.error('Failed to save visitor stats:', e)
+    console.error('[Visitor] Failed to save visitor stats:', e)
     throw e
   } finally {
     isWriting = false
@@ -94,11 +111,15 @@ export async function recordVisit(
   visitorId?: string,
   userAgent?: string
 ): Promise<VisitorStats> {
+  console.log(`[Visitor] Recording visit - IP: ${ip}, VisitorID: ${visitorId ? 'present' : 'absent'}, Vercel: ${isVercel}`)
+  
   if (!cachedStats) {
     cachedStats = await initStats()
+    console.log(`[Visitor] Initialized stats: total=${cachedStats.total}, today=${cachedStats.today}, online=${cachedStats.online}`)
   }
 
   if (isNewDay(cachedStats.lastResetTime)) {
+    console.log('[Visitor] New day detected, resetting today stats')
     cachedStats = {
       total: cachedStats.total,
       today: 0,
@@ -112,27 +133,25 @@ export async function recordVisit(
   let stats = JSON.parse(JSON.stringify(cachedStats))
   const now = Date.now()
 
-  // 使用组合标识符：优先使用前端传递的 visitorId，其次使用 IP + User-Agent 哈希
   let recordKey: string
   
   if (visitorId) {
-    // 前端传递的唯一访客ID（最优先）
     recordKey = `vid:${visitorId}`
   } else if (userAgent) {
-    // 使用 IP + User-Agent 组合创建唯一标识
     const crypto = await import('crypto')
     const hash = crypto.createHash('sha256').update(`${ip}:${userAgent}`).digest('hex').substring(0, 16)
     recordKey = `ua:${hash}`
   } else {
-    // 降级到仅使用IP
     recordKey = `ip:${ip}`
   }
 
   if (!stats.todayRecords[recordKey]) {
     stats.total++
     stats.todayRecords[recordKey] = { count: 1, lastVisit: now }
+    console.log(`[Visitor] New visitor: ${recordKey}, total=${stats.total}`)
   } else {
     stats.todayRecords[recordKey].lastVisit = now
+    console.log(`[Visitor] Existing visitor: ${recordKey}, updated lastVisit`)
   }
 
   stats.today = Object.keys(stats.todayRecords).length
@@ -142,21 +161,26 @@ export async function recordVisit(
   
   try {
     await writeStatsSafe(stats)
+    console.log(`[Visitor] Stats saved: total=${stats.total}, today=${stats.today}, online=${stats.online}`)
   } catch (e) {
-    console.error('Failed to save visitor stats:', e)
+    console.error('[Visitor] Failed to save visitor stats:', e)
   }
 
   return stats
 }
 
 export async function getStats(): Promise<VisitorStats> {
+  console.log('[Visitor] Getting stats, Vercel:', isVercel)
+  
   if (!cachedStats) {
     cachedStats = await initStats()
+    console.log(`[Visitor] Initialized stats from cache: total=${cachedStats.total}, today=${cachedStats.today}`)
   }
 
   let stats = JSON.parse(JSON.stringify(cachedStats))
 
   if (isNewDay(stats.lastResetTime)) {
+    console.log('[Visitor] New day in getStats, resetting')
     stats = {
       total: stats.total,
       today: 0,
@@ -169,12 +193,13 @@ export async function getStats(): Promise<VisitorStats> {
     try {
       await writeStatsSafe(stats)
     } catch (e) {
-      console.error('Failed to save visitor stats:', e)
+      console.error('[Visitor] Failed to save reset stats:', e)
     }
   }
 
   stats.today = Object.keys(stats.todayRecords).length
   stats.online = calculateOnline(stats)
 
+  console.log(`[Visitor] Returning stats: total=${stats.total}, today=${stats.today}, online=${stats.online}`)
   return stats
 }
