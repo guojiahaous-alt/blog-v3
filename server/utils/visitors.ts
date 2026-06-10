@@ -109,13 +109,13 @@ export async function recordVisit(ip: string): Promise<VisitorStats> {
   const now = Date.now()
 
   if (!stats.todayRecords[ip]) {
-    stats.today++
     stats.total++
     stats.todayRecords[ip] = { count: 1, lastVisit: now }
   } else {
     stats.todayRecords[ip].lastVisit = now
   }
 
+  stats.today = Object.keys(stats.todayRecords).length
   stats.online = calculateOnline(stats)
 
   cachedStats = JSON.parse(JSON.stringify(stats))
