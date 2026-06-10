@@ -1,5 +1,4 @@
-import { readFile, writeFile, mkdir, access } from 'fs/promises'
-import { join } from 'path'
+import { Redis } from '@upstash/redis'
 
 export interface VisitorStats {
   total: number
@@ -9,52 +8,27 @@ export interface VisitorStats {
   lastResetTime: number
 }
 
-const STATS_DIR = join(process.cwd(), 'data')
-const STATS_FILE = join(STATS_DIR, 'visitors.json')
 const ONLINE_TIMEOUT = 300000
 
-let cachedStats: VisitorStats | null = null
-let isWriting = false
-let pendingWrites: (() => Promise<void>)[] = []
+const defaultStats: VisitorStats = {
+  total: 0,
+  today: 0,
+  online: 0,
+  todayRecords: {},
+  lastResetTime: Date.now(),
+}
 
-const isVercel = process.env.VERCEL === '1' || !!process.env.VERCEL_URL
+// 使用 Vercel KV 的环境变量
+let redis: ReturnType<typeof Redis.fromEnv> | null = null
 
-async function initStats(): Promise<VisitorStats> {
-  try {
-    await mkdir(STATS_DIR, { recursive: true })
-    
-    try {
-      await access(STATS_FILE)
-      const data = await readFile(STATS_FILE, 'utf-8')
-      const parsed = JSON.parse(data)
-      
-      return {
-        total: parsed.total || 0,
-        today: parsed.today || 0,
-        online: parsed.online || 0,
-        todayRecords: parsed.todayRecords || {},
-        lastResetTime: parsed.lastResetTime || Date.now(),
-      }
-    } catch {
-      console.log('[Visitor] Stats file not found, creating new')
-      return {
-        total: 0,
-        today: 0,
-        online: 0,
-        todayRecords: {},
-        lastResetTime: Date.now(),
-      }
-    }
-  } catch (e) {
-    console.error('[Visitor] Failed to init stats:', e)
-    return {
-      total: 0,
-      today: 0,
-      online: 0,
-      todayRecords: {},
-      lastResetTime: Date.now(),
-    }
-  }
+try {
+  // Vercel KV 使用 KV_ 前缀的环境变量
+  redis = new Redis({
+    url: process.env.KV_REST_API_URL!,
+    token: process.env.KV_REST_API_TOKEN!,
+  })
+} catch (error) {
+  console.warn('[Visitor] Redis initialization failed, using default stats:', error)
 }
 
 function isNewDay(lastReset: number): boolean {
@@ -70,117 +44,33 @@ function isNewDay(lastReset: number): boolean {
 function calculateOnline(stats: VisitorStats): number {
   const now = Date.now()
   let onlineCount = 0
-
   for (const record of Object.values(stats.todayRecords)) {
     if (now - record.lastVisit <= ONLINE_TIMEOUT) {
       onlineCount++
     }
   }
-
   return onlineCount
 }
 
-async function writeStatsSafe(stats: VisitorStats): Promise<void> {
-  if (isWriting) {
-    return new Promise((resolve) => {
-      pendingWrites.push(async () => {
-        await writeFile(STATS_FILE, JSON.stringify(stats, null, 2))
-        resolve()
-      })
-    })
+export async function recordVisit(ip: string, visitorId?: string): Promise<VisitorStats> {
+  if (!redis) {
+    console.warn('[Visitor] Redis not available, skipping record')
+    return defaultStats
   }
 
-  isWriting = true
+  let stats = defaultStats
+
   try {
-    await writeFile(STATS_FILE, JSON.stringify(stats, null, 2))
-    
-    while (pendingWrites.length > 0) {
-      const write = pendingWrites.shift()
-      if (write) await write()
+    const stored = await redis.get<VisitorStats>('visitor-stats')
+    if (stored) {
+      stats = stored
     }
-  } catch (e) {
-    console.error('[Visitor] Failed to save visitor stats:', e)
-    throw e
-  } finally {
-    isWriting = false
+  } catch (error) {
+    console.warn('[Visitor] Failed to get stats from Redis:', error)
+    stats = defaultStats
   }
-}
-
-export async function recordVisit(
-  ip: string,
-  visitorId?: string,
-  userAgent?: string
-): Promise<VisitorStats> {
-  console.log(`[Visitor] Recording visit - IP: ${ip}, VisitorID: ${visitorId ? 'present' : 'absent'}, Vercel: ${isVercel}`)
-  
-  if (!cachedStats) {
-    cachedStats = await initStats()
-    console.log(`[Visitor] Initialized stats: total=${cachedStats.total}, today=${cachedStats.today}, online=${cachedStats.online}`)
-  }
-
-  if (isNewDay(cachedStats.lastResetTime)) {
-    console.log('[Visitor] New day detected, resetting today stats')
-    cachedStats = {
-      total: cachedStats.total,
-      today: 0,
-      online: 0,
-      todayRecords: {},
-      lastResetTime: Date.now(),
-    }
-    await writeStatsSafe(cachedStats)
-  }
-
-  let stats = JSON.parse(JSON.stringify(cachedStats))
-  const now = Date.now()
-
-  let recordKey: string
-  
-  if (visitorId) {
-    recordKey = `vid:${visitorId}`
-  } else if (userAgent) {
-    const crypto = await import('crypto')
-    const hash = crypto.createHash('sha256').update(`${ip}:${userAgent}`).digest('hex').substring(0, 16)
-    recordKey = `ua:${hash}`
-  } else {
-    recordKey = `ip:${ip}`
-  }
-
-  if (!stats.todayRecords[recordKey]) {
-    stats.total++
-    stats.todayRecords[recordKey] = { count: 1, lastVisit: now }
-    console.log(`[Visitor] New visitor: ${recordKey}, total=${stats.total}`)
-  } else {
-    stats.todayRecords[recordKey].lastVisit = now
-    console.log(`[Visitor] Existing visitor: ${recordKey}, updated lastVisit`)
-  }
-
-  stats.today = Object.keys(stats.todayRecords).length
-  stats.online = calculateOnline(stats)
-
-  cachedStats = JSON.parse(JSON.stringify(stats))
-  
-  try {
-    await writeStatsSafe(stats)
-    console.log(`[Visitor] Stats saved: total=${stats.total}, today=${stats.today}, online=${stats.online}`)
-  } catch (e) {
-    console.error('[Visitor] Failed to save visitor stats:', e)
-  }
-
-  return stats
-}
-
-export async function getStats(): Promise<VisitorStats> {
-  console.log('[Visitor] Getting stats, Vercel:', isVercel)
-  
-  if (!cachedStats) {
-    cachedStats = await initStats()
-    console.log(`[Visitor] Initialized stats from cache: total=${cachedStats.total}, today=${cachedStats.today}`)
-  }
-
-  let stats = JSON.parse(JSON.stringify(cachedStats))
 
   if (isNewDay(stats.lastResetTime)) {
-    console.log('[Visitor] New day in getStats, resetting')
     stats = {
       total: stats.total,
       today: 0,
@@ -188,18 +78,65 @@ export async function getStats(): Promise<VisitorStats> {
       todayRecords: {},
       lastResetTime: Date.now(),
     }
-    cachedStats = JSON.parse(JSON.stringify(stats))
-    
+  }
+
+  const now = Date.now()
+  const recordKey = visitorId ? `vid:${visitorId}` : `ip:${ip}`
+
+  if (!stats.todayRecords[recordKey]) {
+    stats.total++
+    stats.todayRecords[recordKey] = { count: 1, lastVisit: now }
+  } else {
+    stats.todayRecords[recordKey].lastVisit = now
+  }
+
+  stats.today = Object.keys(stats.todayRecords).length
+  stats.online = calculateOnline(stats)
+
+  try {
+    await redis.set('visitor-stats', stats)
+  } catch (error) {
+    console.warn('[Visitor] Failed to save stats to Redis:', error)
+  }
+
+  return stats
+}
+
+export async function getStats(): Promise<VisitorStats> {
+  if (!redis) {
+    console.warn('[Visitor] Redis not available, returning default stats')
+    return defaultStats
+  }
+
+  let stats = defaultStats
+
+  try {
+    const stored = await redis.get<VisitorStats>('visitor-stats')
+    if (stored) {
+      stats = stored
+    }
+  } catch (error) {
+    console.warn('[Visitor] Failed to get stats from Redis:', error)
+    return defaultStats
+  }
+
+  if (isNewDay(stats.lastResetTime)) {
+    stats = {
+      total: stats.total,
+      today: 0,
+      online: 0,
+      todayRecords: {},
+      lastResetTime: Date.now(),
+    }
     try {
-      await writeStatsSafe(stats)
-    } catch (e) {
-      console.error('[Visitor] Failed to save reset stats:', e)
+      await redis.set('visitor-stats', stats)
+    } catch (error) {
+      console.warn('[Visitor] Failed to save reset stats:', error)
     }
   }
 
   stats.today = Object.keys(stats.todayRecords).length
   stats.online = calculateOnline(stats)
 
-  console.log(`[Visitor] Returning stats: total=${stats.total}, today=${stats.today}, online=${stats.online}`)
   return stats
 }

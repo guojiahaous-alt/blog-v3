@@ -61,17 +61,20 @@ export default defineEventHandler(async (event) => {
 		const categories = post.categories || []
 		let currentLevel = stats.categories
 
-		for (const [index, categoryName] of categories.entries()) {
-			if (typeof categoryName !== 'string')
-				continue
+		// 确保 categories 是数组
+		if (Array.isArray(categories)) {
+			for (const [index, categoryName] of categories.entries()) {
+				if (typeof categoryName !== 'string')
+					continue
 
-			const category = findOrCreateCategory(categoryName, currentLevel)
-			category.posts++
+				const category = findOrCreateCategory(categoryName, currentLevel)
+				category.posts++
 
-			if (index < categories.length - 1) {
-				if (!category.children)
-					category.children = []
-				currentLevel = category.children
+				if (index < categories.length - 1) {
+					if (!category.children)
+						category.children = []
+					currentLevel = category.children
+				}
 			}
 		}
 
