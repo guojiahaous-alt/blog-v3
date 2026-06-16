@@ -54,7 +54,7 @@ export default defineAppConfig({
 	// @keep-sorted
 	footer: {
 		/** 页脚版权信息，支持 <br> 换行等 HTML 标签 */
-		copyright: `© ${Temporal.Now.plainDateISO().year.toString()} ${blogConfig.author.name}`,
+		copyright: `© ${Temporal.Now.plainDateISO().year.toString()} ${blogConfig.author.name} <br> <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">豫ICP备2026025237号</a>`,
 		/** 侧边栏底部图标导航 */
 		iconNav: [
 			{ icon: 'tabler:home', text: '个人主页', url: blogConfig.author.homepage },

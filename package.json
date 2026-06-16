@@ -48,6 +48,7 @@
     "embla-carousel-vue": "catalog:ui",
     "embla-carousel-wheel-gestures": "catalog:ui",
     "es-toolkit": "catalog:util",
+    "esbuild": "0.27.0",
     "minisearch": "catalog:util",
     "nuxt": "catalog:framework",
     "parse-domain": "catalog:util",
