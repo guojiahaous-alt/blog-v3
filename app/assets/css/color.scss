@@ -22,7 +22,7 @@
 :root,
 .light {
 	--hue-theme: 220deg;
-	--bg-image: url('https://img-reg-ab.imagency.cn/e/55b3344094323fb2589ca58051d556f7.jpeg');
+	--bg-image: url('https://img.guoyubo.cn/img/1779817353909.jpeg');
 	--c-text: hsl(var(--hue-theme) 0% 0%);
 	--c-text-1: hsl(var(--hue-theme) 0% 20%);
 	--c-text-2: hsl(var(--hue-theme) 0% 40%);
@@ -55,6 +55,6 @@
 .dark {
 	@include dark-theme;
 
-	--bg-image: url('https://img-reg-ab.imagency.cn/e/55b3344094323fb2589ca58051d556f7.jpeg');
+	--bg-image: url('https://img.guoyubo.cn/img/1779817353909.jpeg');
 	color-scheme: dark;
 }
