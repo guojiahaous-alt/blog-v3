@@ -24,7 +24,7 @@ onMounted(() => {
 </script>
 
 <template>
-<section ref="comment" class="z-comment">
+<section id="comments" ref="comment" class="z-comment">
 	<h3 class="text-creative">
 		评论区
 	</h3>
