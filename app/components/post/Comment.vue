@@ -7,7 +7,7 @@ onMounted(() => {
 	script.setAttribute('data-repo', 'guojiahaous-alt/blog-v3')
 	script.setAttribute('data-repo-id', 'R_kgDOSlEWmA')
 	script.setAttribute('data-category', 'General')
-	script.setAttribute('data-category-id', 'DIC_kwDONW9V2M4Cq5XV')
+	script.setAttribute('data-category-id', 'DIC_kwDOSlEWmM4DHgYM')
 	script.setAttribute('data-mapping', 'pathname')
 	script.setAttribute('data-strict', '0')
 	script.setAttribute('data-reactions-enabled', '1')
