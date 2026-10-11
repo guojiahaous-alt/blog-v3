@@ -3,27 +3,37 @@ const commentEl = useTemplateRef('comment')
 const colorMode = useColorMode()
 
 onMounted(() => {
+	// CDN 列表，按优先级尝试（jsdelivr 国内更稳定，unpkg 备用）
+	const cdns = [
+		'https://cdn.jsdelivr.net/npm/@waline/client@v3/dist',
+		'https://unpkg.com/@waline/client@v3/dist',
+	]
+
 	// 加载 Waline 样式
 	const link = document.createElement('link')
 	link.rel = 'stylesheet'
-	link.href = 'https://unpkg.com/@waline/client@v3/dist/waline.css'
+	link.href = `${cdns[0]}/waline.css`
 	document.head.appendChild(link)
 
-	// 加载 Waline 脚本并初始化
-	const script = document.createElement('script')
-	script.type = 'module'
-	script.textContent = `
-		import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
-		window.__walineInstance = init({
-			el: '#waline',
-			serverURL: 'https://my-waline-1.vercel.app',
-			dark: 'auto',
-			locale: {
-				placeholder: '说点什么吧~ 支持匿名评论',
-			},
-		});
-	`
-	commentEl.value?.appendChild(script)
+	// 动态加载 Waline：第一个 CDN 失败则自动尝试下一个
+	const tryLoad = (index = 0) => {
+		const base = cdns[index]
+		import(`${base}/waline.js`)
+			.then(({ init }) => {
+				window.__walineInstance = init({
+					el: '#waline',
+					serverURL: 'https://my-waline-1.vercel.app',
+					dark: 'auto',
+					locale: {
+						placeholder: '说点什么吧~ 支持匿名评论',
+					},
+				})
+			})
+			.catch(() => {
+				if (index + 1 < cdns.length) tryLoad(index + 1)
+			})
+	}
+	tryLoad()
 })
 
 // 监听博客主题切换，同步 Waline 主题
