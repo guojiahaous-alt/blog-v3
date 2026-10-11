@@ -3,43 +3,28 @@ const commentEl = useTemplateRef('comment')
 const colorMode = useColorMode()
 
 onMounted(() => {
-	// CDN 列表，按优先级尝试（jsdelivr 国内更稳定，unpkg 备用）
-	const cdns = [
-		'https://cdn.jsdelivr.net/npm/@waline/client@v3/dist',
-		'https://unpkg.com/@waline/client@v3/dist',
-	]
-
-	// 加载 Waline 样式
-	const link = document.createElement('link')
-	link.rel = 'stylesheet'
-	link.href = `${cdns[0]}/waline.css`
-	document.head.appendChild(link)
-
-	// 动态加载 Waline：第一个 CDN 失败则自动尝试下一个
-	const tryLoad = (index = 0) => {
-		const base = cdns[index]
-		import(`${base}/waline.js`)
-			.then(({ init }) => {
-				window.__walineInstance = init({
-					el: '#waline',
-					serverURL: 'https://my-waline-1.vercel.app',
-					dark: 'auto',
-					requiredFields: ['nick'],
-					locale: {
-						placeholder: '说点什么吧~ 支持匿名评论',
-					},
-				})
-			})
-			.catch(() => {
-				if (index + 1 < cdns.length) tryLoad(index + 1)
-			})
-	}
-	tryLoad()
+	const script = document.createElement('script')
+	script.src = 'https://giscus.app/client.js'
+	script.setAttribute('data-repo', 'guojiahaous-alt/blog-v3')
+	script.setAttribute('data-repo-id', 'R_kgDOSlEWmA')
+	script.setAttribute('data-category', 'General')
+	script.setAttribute('data-category-id', 'DIC_kwDOSlEWmM4DHgYM')
+	script.setAttribute('data-mapping', 'pathname')
+	script.setAttribute('data-reactions-enabled', '1')
+	script.setAttribute('data-input-position', 'top')
+	script.setAttribute('data-theme', colorMode.value === 'dark' ? 'dark' : 'light')
+	script.setAttribute('data-lang', 'zh-CN')
+	script.crossOrigin = 'anonymous'
+	script.async = true
+	commentEl.value?.appendChild(script)
 })
 
-// 监听博客主题切换，同步 Waline 主题
+// 监听博客主题切换，同步 Giscus 主题
 watch(() => colorMode.value, (theme) => {
-	window.__walineInstance?.update({ dark: theme === 'dark' })
+	const iframe = document.querySelector<HTMLIFrameElement>('iframe.giscus-frame')
+	iframe?.contentWindow?.postMessage({
+		giscus: { setConfig: { theme: theme === 'dark' ? 'dark' : 'light' } },
+	}, 'https://giscus.app')
 })
 </script>
 
@@ -49,7 +34,7 @@ watch(() => colorMode.value, (theme) => {
 		<Icon name="tabler:message-circle" />
 		评论
 	</h3>
-	<div id="waline" />
+	<div class="giscus" />
 </section>
 </template>
 
@@ -77,13 +62,7 @@ watch(() => colorMode.value, (theme) => {
 	}
 }
 
-#waline {
-	:deep(.wl-card) {
-		border-radius: 12px;
-	}
-	/* 隐藏网址输入框，评论只需昵称 */
-	:deep(.wl-link) {
-		display: none !important;
-	}
+.giscus {
+	min-height: 10rem;
 }
 </style>
