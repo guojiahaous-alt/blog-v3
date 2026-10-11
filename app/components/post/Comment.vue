@@ -24,6 +24,7 @@ onMounted(() => {
 					el: '#waline',
 					serverURL: 'https://my-waline-1.vercel.app',
 					dark: 'auto',
+					requiredFields: ['nick'],
 					locale: {
 						placeholder: '说点什么吧~ 支持匿名评论',
 					},
@@ -79,6 +80,10 @@ watch(() => colorMode.value, (theme) => {
 #waline {
 	:deep(.wl-card) {
 		border-radius: 12px;
+	}
+	/* 隐藏网址输入框，评论只需昵称 */
+	:deep(.wl-link) {
+		display: none !important;
 	}
 }
 </style>
