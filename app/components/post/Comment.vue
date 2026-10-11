@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const commentEl = useTemplateRef('comment')
+const loaded = ref(false)
 
 onMounted(() => {
 	const script = document.createElement('script')
@@ -19,37 +20,52 @@ onMounted(() => {
 	script.crossOrigin = 'anonymous'
 	script.async = true
 
+	script.onload = () => { loaded.value = true }
 	commentEl.value?.appendChild(script)
 })
 </script>
 
 <template>
 <section id="comments" ref="comment" class="z-comment">
-	<h3 class="text-creative">
-		评论区
+	<h3 class="z-comment__title">
+		<Icon name="tabler:message-dots" />
+		评论
 	</h3>
-	<div class="giscus-container">
-		<p>评论加载中...</p>
+	<div v-if="!loaded" class="z-comment__loading">
+		<Icon name="line-md:loading-twotone-loop" />
+		<span>评论区加载中…</span>
 	</div>
 </section>
 </template>
 
 <style lang="scss" scoped>
 .z-comment {
-	margin: 3rem 1rem;
+	margin: 4rem 1rem 2rem;
 
-	> h3 {
-		margin-top: 3rem;
-		font-size: 1.25rem;
+	&__title {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-bottom: 1.5rem;
+		font-size: 1.4rem;
+		font-weight: 700;
+		color: var(--text-1);
+	}
+
+	&__loading {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		padding: 3rem 1rem;
+		color: var(--text-3);
+		font-size: 0.9rem;
 	}
 }
 
-.giscus-container {
-	margin: 2em 0;
-	min-height: 200px;
-}
-
 :deep(.giscus) {
-	margin-top: 1em;
+	width: 100%;
+	max-width: 100%;
+	margin: 0;
 }
 </style>
